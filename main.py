@@ -126,7 +126,7 @@ def convert2Video(picdir, outputname, myfps=25):
         os.makedirs(save_video_dir)
     fps = myfps
     frames = sorted(os.listdir(im_dir))  # 提取序列
-    img = cv2.imread(os.path.join(im_dir, frames[0]))
+    img = cv2.imread(os.path.join(im_dir, frames[2]))  # 默认选第 2 个文件，因为第一个可能是系统文件
     img_size = (img.shape[1], img.shape[0])
     seq_name = outputname
     video_dir = os.path.join(save_video_dir, seq_name)
@@ -146,3 +146,5 @@ def convert2Video(picdir, outputname, myfps=25):
 
 root, label, itemNameInput, startButton, endButton, convertButton, rmPicFolderButton = makeUI()  
 root.mainloop()
+
+
