@@ -1,4 +1,4 @@
-from PIL import ImageGrab, Image
+from PIL import ImageGrab, Image  
 import os
 import time
 import tkinter as tk
@@ -8,7 +8,7 @@ import cv2
 
 global_folder = 'myscreen'  # 文件夹
 global_pic_name_i = 100000000  # 截屏图像名称序列
-global_pic_time = 5000  # 截屏的时间差
+global_pic_time = 5000  # 截屏的时间差（5000 的话，一小时大概 30 秒）
 global_afterid = None  # after id
 global_unixtime = None  # unix 时间戳
 
@@ -28,14 +28,14 @@ def takeScrPic(folder, picName):
     screenshot_path = os.path.join(screenshot_folder, screenshot_name)   
     resized_screenshot.save(screenshot_path, 'JPEG', quality=pic_quality)  # 保存到目录
     print(f'The resized screenshot is {new_width} wide x {new_height} tall and saved as {screenshot_path}')  # 打印结果
-
+   
 # 程序的界面
 def makeUI():
     root = tk.Tk()
     root.title('screenRec')
     root.attributes('-topmost', True) # 将窗口置顶
     width = 200
-    height = 170
+    height = 200
     screenwidth = root.winfo_screenwidth()
     screenheight = root.winfo_screenheight()
     size_geo = '%dx%d+%d+%d' % (width, height, (screenwidth-width)/2, (screenheight-height)/2 - 70)
@@ -51,7 +51,38 @@ def makeUI():
     endButton.pack()
     convertButton = tk.Button(root, text='转换成视频', command=item2video, state='disabled')
     convertButton.pack()
-    return root, label, itemNameInput, startButton, endButton, convertButton
+    rmPicFolderButton = tk.Button(root, text='删除图片文件夹', command=rmPicFolder, state='disabled')
+    rmPicFolderButton.pack()
+    return root, label, itemNameInput, startButton, endButton, convertButton, rmPicFolderButton
+
+# 删除一个文件夹
+def delete_directory(path):
+    if not isinstance(path, str):  
+        raise ValueError("Path must be a string.")   
+    if not os.path.exists(path):  
+        print(f"The directory {path} does not exist.")
+        messagebox.showerror('error', '文件夹不存在')
+        return 0
+    for name in os.listdir(path): 
+        full_path = os.path.join(path, name) 
+        if os.path.isfile(full_path) or os.path.islink(full_path):  
+            os.remove(full_path)
+        elif os.path.isdir(full_path):  
+            delete_directory(full_path) 
+    try:  
+        os.rmdir(path)  
+        print(f"Successfully deleted the directory: {path}")  
+    except OSError as e:  
+        print(f"Error occurred while deleting the directory: {path} - {e.strerror}")
+    label.config(text = '删除完成')
+    rmPicFolderButton.config(state='disabled')
+
+
+# 单击删除文件夹按钮后
+def rmPicFolder():
+    itemProjName = itemNameInput.get()
+    delete_directory('./' + itemProjName)
+    return 0
 
 # 开始录制的点击事件
 def clickDef():
@@ -83,7 +114,6 @@ def stopAfter():
 
 # 点击 转化成视频 按钮
 def item2video():
-    label.config(text = '转化中，请稍后...')
     itemProjName = itemNameInput.get()
     convertButton.config(state='disabled')
     convert2Video(itemProjName, itemProjName + '.mp4')
@@ -103,7 +133,7 @@ def convert2Video(picdir, outputname, myfps=25):
     # fourcc = cv2.VideoWriter_fourcc('M', 'P', '4', 'V')
     fourcc = cv2.VideoWriter_fourcc(*'avc1')
     videowriter = cv2.VideoWriter(video_dir, fourcc, fps, img_size)
-
+ 
     for frame in frames:
         f_path = os.path.join(im_dir, frame)
         image = cv2.imread(f_path)
@@ -111,7 +141,8 @@ def convert2Video(picdir, outputname, myfps=25):
         print(frame + ' has been written!')
     videowriter.release()
     label.config(text = '转化完成')
+    rmPicFolderButton.config(state='normal')
     # ↑↑↑↑↑ convert2Video('myscreen', 'out.mp4') 本函数的示例用法 ↑↑↑↑↑
 
-root, label, itemNameInput, startButton, endButton, convertButton = makeUI()
+root, label, itemNameInput, startButton, endButton, convertButton, rmPicFolderButton = makeUI()  
 root.mainloop()
